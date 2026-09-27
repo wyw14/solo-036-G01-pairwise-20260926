@@ -119,6 +119,7 @@ type ControlSnapshot struct {
 	Permits    []PermitState   `json:"permits"`
 	Runs       []Run           `json:"runs"`
 	Incidents  []Incident      `json:"incidents"`
+	Defects    []DefectRecord  `json:"defects"`
 }
 
 func (s Station) Validate() error {
@@ -229,6 +230,20 @@ func (s ControlSnapshot) StationIndex() map[string]Station {
 	return out
 }
 
+// MaxKilometer is the end of the line plus a small odometer overshoot margin.
+func (s ControlSnapshot) MaxKilometer() float64 {
+	maximum := 0.0
+	for _, station := range s.Stations {
+		if station.Kilometer > maximum {
+			maximum = station.Kilometer
+		}
+	}
+	if maximum == 0 {
+		return 0
+	}
+	return maximum + 1
+}
+
 func (s ControlSnapshot) Validate() error {
 	stations := s.StationIndex()
 	if len(stations) < 2 {
@@ -266,6 +281,11 @@ func (s ControlSnapshot) Validate() error {
 	for _, permit := range s.Permits {
 		if err := permit.Validate(); err != nil {
 			return fmt.Errorf("permit %s: %w", permit.Name, err)
+		}
+	}
+	for _, defect := range s.Defects {
+		if err := defect.Validate(s.MaxKilometer()); err != nil {
+			return fmt.Errorf("defect %s: %w", defect.ID, err)
 		}
 	}
 	return nil

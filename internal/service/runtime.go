@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"github.com/wyw14/solo-036/internal/compressor"
+	"github.com/wyw14/solo-036/internal/defect"
 	"github.com/wyw14/solo-036/internal/emergency"
 	"github.com/wyw14/solo-036/internal/journal"
 	"github.com/wyw14/solo-036/internal/launcher"
@@ -18,5 +19,6 @@ func (r *Runtime) Bootstrap() {
 	_ = launcher.Ready(r.Launcher)
 	_ = compressor.Healthy(r.Compressor)
 	_ = emergency.Safe(r.Pressure)
+	_ = defect.Healthy(r.Defects)
 }
 func (r *Runtime) Shutdown(ctx context.Context) error { r.Pressure.Stop(); return ctx.Err() }

@@ -7,10 +7,18 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 )
 
 func main() {
 	runtime := service.NewRuntime()
+	if mergeWindow := os.Getenv("PIGFLOW_DEFECT_MERGE_WINDOW_M"); mergeWindow != "" {
+		meters, err := strconv.ParseFloat(mergeWindow, 64)
+		if err != nil || meters <= 0 {
+			log.Fatal("PIGFLOW_DEFECT_MERGE_WINDOW_M must be a positive number of meters")
+		}
+		runtime.ConfigureDefectMergeWindow(meters)
+	}
 	if dataDirectory := os.Getenv("PIGFLOW_DATA_DIR"); dataDirectory != "" {
 		if err := runtime.ConfigurePersistence(dataDirectory); err != nil {
 			log.Fatal(err)

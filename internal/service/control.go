@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/wyw14/solo-036/internal/defect"
 	"github.com/wyw14/solo-036/internal/emergency"
 	"github.com/wyw14/solo-036/internal/journal"
 	"github.com/wyw14/solo-036/internal/launcher"
@@ -56,6 +57,7 @@ type RecoveryReport struct {
 	RecoveredRuns    int  `json:"recovered_runs"`
 	RecoveredRoutes  int  `json:"recovered_routes"`
 	RecoveredPermits int  `json:"recovered_permits"`
+	RecoveredDefects int  `json:"recovered_defects"`
 	JournalEvents    int  `json:"journal_events"`
 	Ready            bool `json:"ready"`
 }
@@ -511,6 +513,7 @@ func (r *Runtime) Snapshot() model.ControlSnapshot {
 		Permits:    make([]model.PermitState, 0),
 		Runs:       r.Runs.Snapshot(),
 		Incidents:  append([]model.Incident(nil), control.Incidents...),
+		Defects:    r.Defects.Snapshot(),
 	}
 	for _, value := range control.Stations {
 		snapshot.Stations = append(snapshot.Stations, value)
@@ -590,6 +593,7 @@ func (r *Runtime) RecoverPersistent() (RecoveryReport, error) {
 		}
 	}
 	permit.Restore(r.Permits, permitEvents)
+	defect.Restore(r.Defects, snapshot.Control.Defects)
 	r.mu.Lock()
 	r.control.Stations = snapshot.Control.StationIndex()
 	r.control.Routes = make(map[string]model.RouteState)
@@ -627,6 +631,7 @@ func (r *Runtime) RecoverPersistent() (RecoveryReport, error) {
 		RecoveredRuns:    len(snapshot.Control.Runs),
 		RecoveredRoutes:  len(leasing),
 		RecoveredPermits: len(permitEvents),
+		RecoveredDefects: len(snapshot.Control.Defects),
 		JournalEvents:    len(events),
 		Ready:            true,
 	}, nil
